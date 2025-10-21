@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>スキル分布の変化</title>
+
+  <!-- ECharts CDN（そのまま使えます） -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "メイリオ", sans-serif;
+      margin: 24px;
+      color: #111;
+      background: #f8fafc;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    p.lead { text-align:center; margin-top:0; margin-bottom:20px; color:#444; }
+
+    .charts {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .card {
+      background: white;
+      padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(20,20,30,0.06);
+      width: 420px;
+      max-width: 95%;
+      text-align: center;
+    }
+    .chart-title { font-weight: 600; margin-bottom: 8px; }
+    .chart {
+      width: 100%;
+      height: 360px;
+    }
+    .controls {
+      text-align: center;
+      margin-top: 18px;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.secondary {
+      background: #64748b;
+      margin-left: 8px;
+    }
+    @media (max-width:900px){
+      .charts { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+  <h1>スキル分布の変化</h1>
+  <p class="lead">左：Before　／　右：After（別表示）。ボタンでBeforeをAfterへアニメーション更新します。</p>
+
+  <div class="charts">
+    <div class="card">
+      <div class="chart-title">Before</div>
+      <div id="chart-before" class="chart"></div>
+    </div>
+
+    <div class="card">
+      <div class="chart-title">After</div>
+      <div id="chart-after" class="chart"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="to-after">Before → After にアニメーション更新</button>
+    <button id="to-before" class="secondary">Beforeに戻す</button>
+  </div>
+
+  <script>
+    // --- データ（サンプル） ---
+    const labels = ['HTML', 'CSS', 'JavaScript', 'TypeScript', 'Design'];
+
+    const beforeData = [
+      { name: 'HTML', value: 40 },
+      { name: 'CSS', value: 30 },
+      { name: 'JavaScript', value: 20 },
+      { name: 'TypeScript', value: 5 },
+      { name: 'Design', value: 5 }
+    ];
+
+    const afterData = [
+      { name: 'HTML', value: 25 },
+      { name: 'CSS', value: 25 },
+      { name: 'JavaScript', value: 30 },
+      { name: 'TypeScript', value: 15 },
+      { name: 'Design', value: 5 }
+    ];
+
+    // --- 初期化 ---
+    const elBefore = document.getElementById('chart-before');
+    const elAfter  = document.getElementById('chart-after');
+
+    const chartBefore = echarts.init(elBefore);
+    const chartAfter  = echarts.init(elAfter);
+
+    // 共通オプション（色・ツールチップなど）
+    const commonOptions = {
+      color: ['#FF6B6B','#4EA8DE','#FFD166','#7C3AED','#83C5BE'],
+      tooltip: {
+        trigger: 'item',
+        formatter: '{b} : {c} ({d}%)'
+      },
+      legend: {
+        orient: 'horizontal',
+        bottom: 6,
+        data: labels
+      },
+      series: [{
+        type: 'pie',
+        // ドーナツにする
+        radius: ['45%', '70%'],
+        center: ['50%', '45%'],
+        avoidLabelOverlap: false,
+        label: {
+          show: true,
+          position: 'inside',
+          formatter: '{d}%',
+          fontWeight: 600
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 16,
+            fontWeight: 700
+          },
+          itemStyle: {
+            shadowBlur: 12,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0,0,0,0.2)'
+          }
+        },
+        // アニメーションのデフォルト設定（更新時も適用される）
+        animationDuration: 800,
+        animationEasing: 'cubicOut'
+      }]
+    };
+
+    // --- Before オプション ---
+    const optionBefore = {
+      ...commonOptions,
+      title: {
+        text: 'Before',
+        left: 'center',
+        top: 8,
+        textStyle: { fontSize: 14 }
+      },
+      series: [{
+        ...commonOptions.series[0],
+        data: beforeData
+      }]
+    };
+
+    // --- After オプション ---
+    const optionAfter = {
+      ...commonOptions,
+      title: {
+        text: 'After',
+        left: 'center',
+        top: 8,
+        textStyle: { fontSize: 14 }
+      },
+      series: [{
+        ...commonOptions.series[0],
+        data: afterData,
+        // Afterではラベルの表示位置を外側にして詳細を見せる例
+        label: {
+          show: true,
+          position: 'outside',
+          formatter: '{b}\n{d}%',
+          alignTo: 'labelLine'
+        },
+        labelLine: { show: true, length: 16 }
+      }]
+    };
+
+    // 描画
+    chartBefore.setOption(optionBefore);
+    chartAfter.setOption(optionAfter);
+
+    // ボタンでBeforeをAfterへアニメーション更新（setOptionによる差分アニメ）
+    document.getElementById('to-after').addEventListener('click', () => {
+      chartBefore.setOption({
+        title: { text: 'Before → After (変換中)' },
+        series: [{ data: afterData }]
+      }, { notMerge: false, replaceMerge: ['series'] });
+    });
+
+    // 戻す
+    document.getElementById('to-before').addEventListener('click', () => {
+      chartBefore.setOption({
+        title: { text: 'Before' },
+        series: [{ data: beforeData }]
+      }, { notMerge: false, replaceMerge: ['series'] });
+    });
+
+    // リサイズ対応
+    window.addEventListener('resize', () => {
+      chartBefore.resize();
+      chartAfter.resize();
+    });
+  </script>
+</body>
+</html>
