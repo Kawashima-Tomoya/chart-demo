@@ -1,0 +1,48 @@
+var dom = document.getElementById('chart-container-after');
+var myChart = echarts.init(dom, null, {
+  renderer: 'canvas',
+  useDirtyRect: false,
+});
+var app = {};
+
+var option;
+
+option = {
+  title: {
+    subtext: '2025年',
+    left: 'center',
+  },
+  tooltip: {
+    trigger: 'item',
+  },
+  legend: {
+    orient: 'vertical',
+    left: 'left',
+  },
+  series: [
+    {
+      name: 'Access From',
+      type: 'pie',
+      color: ['#37A2DA', '#32C5E9', '#67E0E3', '#9FE6B8', '#FFDB5C', '#ff9f7f'],
+      radius: '50%',
+      data: [
+        { value: 16, name: 'ハイスキル' },
+        { value: 15, name: 'ミドルスキル' },
+        { value: 26, name: 'ロースキル' },
+      ],
+      emphasis: {
+        itemStyle: {
+          shadowBlur: 10,
+          shadowOffsetX: 0,
+          shadowColor: 'rgba(0, 0, 0, 0.5)',
+        },
+      },
+    },
+  ],
+};
+
+if (option && typeof option === 'object') {
+  myChart.setOption(option);
+}
+
+window.addEventListener('resize', myChart.resize);
